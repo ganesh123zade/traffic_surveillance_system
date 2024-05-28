@@ -13,7 +13,6 @@ import smtplib
 from email.mime.text import MIMEText
 
 # Step 1: Extract frames from the video
-# Step 1: Extract frames from the video
 def extract_frames(video_path, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)

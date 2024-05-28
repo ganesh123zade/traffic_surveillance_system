@@ -25,23 +25,19 @@ def extract_frames(video_path, output_folder):
         cv2.imwrite(os.path.join(output_folder, f"frame{count}.jpg"), image)
         success, image = vidcap.read()
         count += 1
-
+        
 # Call the extract_frames function with the correct video path
 extract_frames('path_to_video.mp4', 'output_frames_folder')
 
 # Open the video frames in a window
 video_path = 'accident.mp4'  # Provide the correct path to the video
 vidcap = cv2.VideoCapture('accident.mp4')
-
 while True:
     success, frame = vidcap.read()
 
     if not success:
         break
-
     cv2.imshow('accident', frame)
-    
-
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
@@ -97,8 +93,6 @@ def get_current_location():
     latitude = random.uniform(-90, 90)
     longitude = random.uniform(-180, 180)
     return latitude, longitude
-
-# Step 5: Send alert with location
 # Step 5: Send alert with location
 def send_alert(location):
     sender = 'prinshis673@gmail.com'
@@ -119,10 +113,6 @@ def send_alert(location):
         server.starttls()
         server.login(sender, 'vwal fiom ygzs guob')
         server.sendmail(sender, receiver, msg.as_string())
-
-
-
-
 def detect_accident(frame):
     frame = cv2.resize(frame, (150, 150))
     frame = frame / 255.0
@@ -133,7 +123,6 @@ def detect_accident(frame):
 video_path = 'accident.mp4'
 vidcap = cv2.VideoCapture('accident.mp4')
 success, frame = vidcap.read()
-
 while success:
     if detect_accident(frame):
         location = get_current_location()

@@ -78,14 +78,18 @@ def detect_accidents(video_source=0):
 def send_email_alert(alert):
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
-    sender_email = 'abhishekdubalgonde7846@gmail.com'
-    receiver_email = 'ankur@edunetfoundation.org'
-    password = 'vmoj nhip imrp wytx'
-
-    print(f"Sender: {sender_email}, Receiver: {receiver_email}, SMTP Server: {smtp_server}, Port: {smtp_port}")
+    sender_email = 'prinshis673@gmail.com'  # Update with your sender email
+    receiver_email = 'rohit.panchal.9212@gmail.com'  # Update with recipient email
+    password = 'pexw osbo otnd euvv'  # Update with your email password
 
     subject = "Accident Detected"
-    body = f"An accident was detected at {alert['time']}.\nLocation: {alert['location']}"
+    body = f"An accident was detected at {alert['time']}.\nLocation: {alert['location']}\n\n"
+
+    # Google Maps direction link
+    google_maps_link = f"https://www.google.com/maps/search/?api=1&query={alert['location'].replace(' ', '+')}"
+
+    # Append the Google Maps direction link to the email body
+    body += f"Google Maps Directions: {google_maps_link}"
 
     msg = MIMEMultipart()
     msg['From'] = sender_email

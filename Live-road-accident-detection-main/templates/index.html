@@ -1,9 +1,61 @@
-
-    {% include "header.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accident Detection System</title>
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: center;
+        }
+        .popup-content {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .popup video {
+            width: 100%;
+            height: auto;
+        }
+        .popup canvas {
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+  {% include "header.html" %}
+    <!-- Existing content -->
     <div id="main" style="padding-top: 100px;">
-
-        <button class="cctv_brn" onclick="location.href='{{ url_for('cctv_dashboard') }}'">surveillance cam</button>
-
+        <button class="cctv_brn" onclick="location.href='/cctv_dashboard'">Surveillance Cam</button>
         <section class="home active" id="home">
             <div class="container">
                 <h1 class="title">Accident Detection</h1>
@@ -22,23 +74,29 @@
                     </div>
                 </div>
                 <div id="alerts">
-                    <h2 class="title2 ">Alerts</h2>
-                    <div id="alertList" class="alert">
-
-                    </div>
+                    <h2 class="title2">Alerts</h2>
+                    <div id="alertList" class="alert"></div>
                 </div>
-            </div>
-        </section>
-
-        <section class="previousAccidentReport" id="previousAccidentReport">
-            <div class="container">
-                <h2>Previous Accident Reports</h2>
-                <div id="previousAccidentPhotos"></div>
+                <div id="previousAccidents">
+                    <h2 class="title2">Previous Accidents</h2>
+                    <div id="previousAccidentsList" class="alert"></div>
+                </div>
             </div>
         </section>
     </div>
 
+    <!-- Popup for uploaded video -->
+    <div id="videoPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <video id="uploadedVideo" controls></video>
+            <canvas id="rgbFrame"></canvas>
+        </div>
+    </div>
+
     <script>
+        let currentTimestamp = 0;
+
         async function getCameraStream() {
             try {
                 document.querySelector('.cam').style.display = 'flex';
@@ -76,13 +134,55 @@
                 });
 
                 if (response.ok) {
+                    const videoUrl = URL.createObjectURL(file);
+                    document.getElementById("uploadedVideo").src = videoUrl;
+                    document.getElementById("videoPopup").style.display = "flex";
+
+                    const rgbResponse = await fetch(`/process_video?filename=${file.name}`);
+                    if (rgbResponse.ok) {
+                        const rgbData = await rgbResponse.json();
+                        displayRGBFrame(rgbData);
+                    }
+
                     alert("Video uploaded successfully.");
+                    fetchAlerts();
                 } else {
                     alert("Failed to upload video.");
                 }
             } catch (error) {
                 console.error("Error uploading the video", error);
                 alert("An error occurred while uploading the video.");
+            }
+        }
+
+        function closePopup() {
+            document.getElementById("videoPopup").style.display = "none";
+        }
+
+        function displayRGBFrame(rgbData) {
+            const canvas = document.getElementById("rgbFrame");
+            const ctx = canvas.getContext("2d");
+            const imageData = new ImageData(new Uint8ClampedArray(rgbData.data), rgbData.width, rgbData.height);
+            canvas.width = rgbData.width;
+            canvas.height = rgbData.height;
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        async function fetchTimestamp() {
+            try {
+                const response = await fetch("/timestamp");
+                if (response.ok) {
+                    const data = await response.json();
+                    const newTimestamp = data.timestamp;
+                    if (newTimestamp > currentTimestamp) {
+                        currentTimestamp = newTimestamp;
+                        fetchAlerts();
+                    }
+                } else {
+                    console.error("Failed to fetch timestamp");
+                }
+            } catch (error) {
+                console.error("Error fetching timestamp", error);
             }
         }
 
@@ -98,11 +198,11 @@
                         alertDiv.innerHTML = `
                             <div class="alert_box">
                                 <img src="${alert.photo}" alt="Accident Photo" width="200">
-                                <p><strong>Time:</strong> ${alert.time}</p>
+                                <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
                                 <p><strong>Location:</strong> ${alert.location}</p>
                             </div>
                         `;
-                        alertList.appendChild(alertDiv);
+                        alertList.prepend(alertDiv); // Add the most recent alerts at the top
                     });
                 } else {
                     console.error("Failed to fetch alerts");
@@ -112,9 +212,39 @@
             }
         }
 
-        setInterval(fetchAlerts, 5000);
+        async function fetchPreviousAccidents() {
+            try {
+                const response = await fetch("/previous_accidents");
+                if (response.ok) {
+                    const alerts = await response.json();
+                    const previousAccidentsList = document.getElementById("previousAccidentsList");
+                    previousAccidentsList.innerHTML = "";
+                    alerts.forEach(alert => {
+                        const alertDiv = document.createElement("div");
+                        alertDiv.innerHTML = `
+                            <div class="alert_box">
+                                <img src="${alert.photo}" alt="Accident Photo" width="200">
+                                <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
+                                <p><strong>Location:</strong> ${alert.location}</p>
+                            </div>
+                        `;
+                        previousAccidentsList.prepend(alertDiv); // Add the most recent previous accidents at the top
+                    });
+                } else {
+                    console.error("Failed to fetch previous accidents");
+                }
+            } catch (error) {
+                console.error("Error fetching previous accidents", error);
+            }
+        }
 
-        document.addEventListener("DOMContentLoaded", fetchAlerts);
+        setInterval(fetchTimestamp, 5000);
+        setInterval(fetchPreviousAccidents, 60000); // Check previous accidents every 60 seconds
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchAlerts();
+            fetchPreviousAccidents();
+        });
     </script>
 </body>
 </html>

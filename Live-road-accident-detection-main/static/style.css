@@ -1,4 +1,4 @@
-/* .................global */
+/* Global Styles */
 * {
   margin: 0;
   padding: 0;
@@ -9,7 +9,7 @@
   transition: all 0.2s ease;
 }
 
-/* .................variables */
+/* Variables */
 :root {
   --trbg-color: #16162d93;
   --bg-color: #1e2452;
@@ -17,22 +17,24 @@
   --p-color: #c0b8fc95;
 }
 
-/* .................body */
+/* Body */
 body {
   font-family: Arial, sans-serif;
   background-color: var(--bg-color);
   position: relative;
 }
 
-/* ................Headings and Paragraphs */
+/* Headings and Paragraphs */
 h1 {
   text-align: center;
   color: var(--text-color);
 }
+
 p {
   color: var(--p-color);
 }
-/* ......................Header and Logo */
+
+/* Header and Logo */
 header {
   width: 100vw;
   padding-top: 10px;
@@ -51,11 +53,13 @@ header {
   justify-content: space-between;
   padding: 15px 0 9px;
 }
+
 #logo {
   font-size: 25px;
   color: var(--p-color);
   font-weight: 100;
 }
+
 #logo .t {
   color: var(--text-color);
   font-weight: 700;
@@ -67,16 +71,17 @@ header {
   height: 100%;
   width: fit-content;
 }
+
 .row > ul > li > a {
   color: var(--text-color);
   margin-left: 25px;
 }
+
 .row > ul > li > a:hover {
   color: var(--p-color);
 }
 
-
-/* ....................container */
+/* Container */
 .container {
   max-width: 1500px;
   width: 80%;
@@ -86,16 +91,18 @@ header {
   align-items: center;
 }
 
-/* ..............title */
-.title{
+/* Title */
+.title {
   font-size: 40px;
 }
-.title2{
+
+.title2 {
   font-size: 40px;
   color: var(--bg-color);
   margin-bottom: 40px;
 }
-/* ........................items */
+
+/* Items */
 .items {
   width: 100%;
   height: 70svh;
@@ -104,7 +111,7 @@ header {
   justify-content: space-around;
 }
 
-/* .......................Item Box */
+/* Item Box */
 .item_box {
   width: 40%;
   height: 380px;
@@ -115,6 +122,7 @@ header {
   flex-direction: column;
   justify-content: center;
 }
+
 .item_box button {
   font-size: 18px;
   font-weight: 500;
@@ -125,17 +133,13 @@ header {
   border-radius: 8px;
   border: none;
 }
+
 .item_box button:hover {
   color: var(--text-color);
   background-color: var(--p-color);
 }
-.ss {
-  width: 85%;
-  height: 70%;
-  border: 1px solid var(--p-color);
-  margin-bottom: 2.5%;
-  border-radius: 8px;
-}
+
+.ss,
 .i_box {
   width: 85%;
   height: 70%;
@@ -149,6 +153,7 @@ header {
   cursor: pointer;
   padding: 10px;
 }
+
 input.i_box::file-selector-button {
   font-weight: bold;
   color: var(--p-color);
@@ -165,7 +170,7 @@ input.i_box::file-selector-button {
   border: none;
 }
 
-/* .......................Video Stream */
+/* Video Stream */
 .cam {
   width: 100vw;
   height: 100svh;
@@ -179,11 +184,12 @@ input.i_box::file-selector-button {
   justify-content: center;
   backdrop-filter: blur(5px);
 }
+
 .cam span.close {
   position: absolute;
   color: var(--text-color);
-  top: 100px;
-  right: 300px;
+  top: 10px;
+  right: 10px;
   cursor: pointer;
   padding: 5px 8px;
   font-size: 16px;
@@ -191,6 +197,7 @@ input.i_box::file-selector-button {
   transition: all 0.2s ease;
   border-radius: 8px;
 }
+
 .cam span.close:hover {
   color: var(--p-color);
   border: solid 0.1px var(--p-color);
@@ -198,8 +205,7 @@ input.i_box::file-selector-button {
   font-weight: 400;
 }
 
-
-/* ...................Video Feed */
+/* Video Feed */
 #videoFeed {
   display: block;
   border: 2px solid #ccc;
@@ -209,7 +215,8 @@ input.i_box::file-selector-button {
   position: absolute;
 }
 
-/* ........................Alerts Container */
+/* Alerts Container */
+#previousAccidents,
 #alerts {
   margin-top: 20px;
   padding: 10px;
@@ -226,7 +233,8 @@ input.i_box::file-selector-button {
   padding: 10px 0;
 }
 
-/* ......................Alert Grid */
+/* Alert Grid */
+#previousAccidents #previousAccidentsList,
 #alerts #alertList {
   display: grid;
   grid-template-columns: auto auto auto;
@@ -244,76 +252,140 @@ input.i_box::file-selector-button {
   transition: transform 0.3s, box-shadow 0.3s;
   margin-bottom: 15px;
 }
+
 .alert .alert_box img:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 16px #00000033;
 }
-.alert .alert_box p{
+
+.alert .alert_box p {
   color: #000;
 }
-.alert .alert_box p strong{
+
+.alert .alert_box p strong {
   color: var(--bg-color);
 }
 
-/* ...............................Graphs Container.............. */
+/* Graphs Container */
 section.graphs {
   width: 100%;
   height: 100svh;
 }
+
 .shell,
 .graph-container {
   width: 100%;
   height: 100%;
   overflow: hidden;
 }
+
 .graph-container iframe {
-  width: 900px;
+  width: 100%;
   height: 100%;
   border: none;
 }
-/* .......................Grid Layout for Graphs */
-/* .item1 { grid-area: main; height: 100%; }
-.item2 { grid-area: menu; height: 100%; }
-.item3 { grid-area: menu1; height: 100%; }
-.item4 { grid-area: menu2; height: 100%; }
-.grid-container {
-  display: grid;
-  grid-template-areas:
-    'main main main main main menu'
-    'main main main main main menu1'
-    'main main main main main menu2'
-    'main main main main main menu2';
-  gap: 5px;
-} */
-.alert_box{
+
+/* Alert Box */
+.alert_box {
   width: 100%;
   height: fit-content;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* border: solid 1px red; */
   margin-bottom: 10px;
 }
-/* ....................................Handling Active Sections */
 
+/* Handling Active Sections */
 .active {
   display: block;
-
 }
-.cctv_brn{
+
+.cctv_brn {
   padding: 7px 12px;
   border-radius: 4px;
   background: none;
   font-size: 22px;
   color: var(--text-color);
   cursor: pointer;
-  border: solid .1px #fff;
+  border: solid 0.1px #fff;
   position: fixed;
   right: 10px;
   background: var(--p-color);
+}
+
+.cctv_brn:hover {
+  color: var(--bg-color);
+  background: #fff;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .row {
+    width: 90%;
+    flex-direction: column;
   }
-  .cctv_brn:hover{
-    color: var(--bg-color);
-    background: #fff;
+
+  #logo {
+    font-size: 20px;
   }
+
+  .item_box {
+    width: 80%;
+    height: 300px;
+  }
+
+  #videoFeed {
+    width: 100%;
+    height: auto;
+  }
+
+  .alert .alert_box img {
+    width: 100%;
+    height: auto;
+  }
+
+  #previousAccidents #previousAccidentsList,
+  #alerts #alertList {
+    grid-template-columns: 1fr;
+  }
+
+  .cam span.close {
+    right: 10px;
+    top: 10px;
+  }
+
+  .cctv_brn {
+    font-size: 18px;
+    right: 5px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 30px;
+  }
+
+  .title2 {
+    font-size: 30px;
+    margin-bottom: 20px;
+  }
+
+  .item_box {
+    height: 250px;
+  }
+
+  #videoFeed {
+    height: 300px;
+  }
+
+  .cam span.close {
+    right: 5px;
+    top: 5px;
+  }
+
+  .cctv_brn {
+    font-size: 16px;
+    padding: 5px 10px;
+  }
+}

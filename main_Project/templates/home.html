@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accident Detection System</title>
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(249, 249, 249, 0.3);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+   
+        }
+        .popup-content {
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 1200px;
+            display: grid;
+            align-items: center;
+            justify-content: center;
+            grid-template-columns: auto auto;
+            background-color: rgba(249, 249, 249, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 9px;
+
+        }
+        .close {
+            color: #000;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .popup video {
+            width: 50%;
+            height: auto;
+        }
+        .popup canvas {
+            width: 100%;
+            height: auto;
+        }
+        .spinner {
+            display: none;
+            margin: auto;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .analysisStatus{
+          width: 50%;
+          display:flex;
+          flex-direction: column;
+          align-item: center;
+          justify-content: center;
+        }
+    </style>
+</head>
+<body>
+  {% include "header.html" %}
+    <!-- Existing content -->
+     <div id="bgbg"></div>
+    <div id="main" style="padding-top: 120px;">
+
+      <button class="cctv_brn">
+        <a href="">Emergency contact</a>
+      </button>
+        <section class="home active" id="home">
+            <div class="container">
+                <h1 class="title">Accident Detection</h1>
+                <div class="items">
+                    <div class="video_stream item_box">
+                        <div class="ss"></div>
+                        <button class="start_cam" onclick="getCameraStream()">Start Camera</button>
+                      </div>
+                      <div class="cam start_cam">
+                          <span class="close" onclick="closeStream()">Close</span>
+                          <video id="videoFeed" autoplay></video>
+                      </div>
+                    <div class="file_upload item_box">
+                        <input type="file" class="i_box" id="videoInput" accept="video/*">
+                        <button onclick="uploadVideo()">Upload Video</button>
+                    </div>
+                </div>
+                <div id="alerts">
+                    <h2 class="title2">Alerts</h2>
+                    <div id="alertList" class="alert"></div>
+                </div>
+                <div id="previousAccidents" class="history">
+                    <h2 class="title2">Previous Accidents</h2>
+                    <div id="previousAccidentsList" class="alert" ></div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Popup for uploaded video -->
+    <div id="videoPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <div id="analysisStatus">
+                <div class="spinner" id="loadingSpinner"></div>
+                <p id="statusText">Analyzing video, please wait...</p>
+            </div>
+            <video id="uploadedVideo" autoplay style="width: 100%;" controls></video>
+            <canvas style="width: 100%;" id="rgbFrame"></canvas>
+        </div>
+    </div>
+
+    <script>
+      let currentTimestamp = 0;
+
+      async function getCameraStream() {
+          try {
+              document.querySelector('.cam').style.display = 'flex';
+              const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+              const video = document.getElementById("videoFeed");
+              video.srcObject = stream;
+          } catch (error) {
+              console.error("Error accessing the camera", error);
+          }
+      }
+
+      function closeStream() {
+          document.querySelector('.cam').style.display = 'none';
+          const video = document.getElementById("videoFeed");
+          const stream = video.srcObject;
+          const tracks = stream.getTracks();
+          tracks.forEach(track => track.stop());
+          video.srcObject = null;
+      }
+
+      async function uploadVideo() {
+          const fileInput = document.getElementById("videoInput");
+          if (fileInput.files.length === 0) {
+              alert("Please select a video file to upload.");
+              return;
+          }
+          const file = fileInput.files[0];
+          const formData = new FormData();
+          formData.append("video", file);
+
+          try {
+              const response = await fetch("/upload_video", {
+                  method: "POST",
+                  body: formData
+              });
+
+              if (response.ok) {
+                  const videoUrl = URL.createObjectURL(file);
+                  document.getElementById("uploadedVideo").src = videoUrl;
+                  document.getElementById("videoPopup").style.display = "flex";
+                  document.getElementById("loadingSpinner").style.display = "block";
+                  document.getElementById("statusText").textContent = "Analyzing video, please wait...";
+
+                  const eventSource = new EventSource("/stream_analysis");
+                  eventSource.onmessage = function(event) {
+                      const data = JSON.parse(event.data);
+                      if (data.status === "done") {
+                          document.getElementById("loadingSpinner").style.display = "none";
+                          document.getElementById("statusText").textContent = "Analysis complete.";
+                          eventSource.close();
+                      } else {
+                          displayFrame(data.frame);
+                      }
+                  };
+
+                  alert("Video uploaded successfully.");
+                  fetchAlerts();
+              } else {
+                  alert("Failed to upload video.");
+              }
+          } catch (error) {
+              console.error("Error uploading the video", error);
+              alert("An error occurred while uploading the video.");
+          }
+      }
+
+      function closePopup() {
+          document.getElementById("videoPopup").style.display = "none";
+      }
+
+      function displayFrame(frameData) {
+          const canvas = document.getElementById("rgbFrame");
+          const ctx = canvas.getContext("2d");
+          const imageData = new ImageData(new Uint8ClampedArray(frameData.data), frameData.width, frameData.height);
+          canvas.width = frameData.width;
+          canvas.height = frameData.height;
+          ctx.putImageData(imageData, 0, 0);
+      }
+
+      async function fetchTimestamp() {
+          try {
+              const response = await fetch("/timestamp");
+              if (response.ok) {
+                  const data = await response.json();
+                  const newTimestamp = data.timestamp;
+                  if (newTimestamp > currentTimestamp) {
+                      currentTimestamp = newTimestamp;
+                      fetchAlerts();
+                  }
+              } else {
+                  console.error("Failed to fetch timestamp");
+              }
+          } catch (error) {
+              console.error("Error fetching timestamp", error);
+          }
+      }
+
+      async function fetchAlerts() {
+          try {
+              const response = await fetch("/alerts");
+              if (response.ok) {
+                  const alerts = await response.json();
+                  const alertList = document.getElementById("alertList");
+                  alertList.innerHTML = "";
+                  alerts.forEach(alert => {
+                      const alertDiv = document.createElement("div");
+                      alertDiv.innerHTML = `
+                          <div class="alert_box">
+                              <img src="${alert.photo}" alt="Accident Photo" width="200">
+                              <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
+                              <p><strong>Location:</strong> ${alert.location}</p>
+                          </div>
+                      `;
+                      alertList.prepend(alertDiv); // Add the most recent alerts at the top
+                  });
+              } else {
+                  console.error("Failed to fetch alerts");
+              }
+          } catch (error) {
+              console.error("Error fetching alerts", error);
+          }
+      }
+
+      async function fetchPreviousAccidents() {
+          try {
+              const response = await fetch("/previous_accidents");
+              if (response.ok) {
+                  const alerts = await response.json();
+                  const previousAccidentsList = document.getElementById("previousAccidentsList");
+                  previousAccidentsList.innerHTML = "";
+                  alerts.forEach(alert => {
+                      const alertDiv = document.createElement("div");
+                      alertDiv.innerHTML = `
+                          <div class="alert_box">
+                              <img src="${alert.photo}" alt="Accident Photo" width="200">
+                              <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
+                              <p><strong>Location:</strong> ${alert.location}</p>
+                          </div>
+                      `;
+                      previousAccidentsList.prepend(alertDiv); // Add the most recent alerts at the top
+                  });
+              } else {
+                  console.error("Failed to fetch alerts");
+              }
+          } catch (error) {
+              console.error("Error fetching alerts", error);
+          }
+      }
+
+      setInterval(fetchTimestamp, 5000); // Fetch new alerts every 5 seconds
+
+      document.addEventListener("DOMContentLoaded", () => {
+          fetchPreviousAccidents();
+      });
+      function history(){
+        var hist = document.querySelector('#previousAccidents');
+        hist.classList.toggle('history')
+      }
+
+  </script>
+    {% include "footer.html" %}
+</body>
+</html>

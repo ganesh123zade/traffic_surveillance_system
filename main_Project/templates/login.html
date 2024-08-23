@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+    <h2>Login</h2>
+    <form method="post">
+        <label>Email:</label>
+        <input type="email" name="email" required><br>
+        <label>Password:</label>
+        <input type="password" name="password" required><br>
+        <button type="submit">Login</button>
+    </form>
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+  </body>
+  </html>
+  {% include "header.html" %}
+  
+  <div id="bgbg"></div>
+  <form method="POST">
+    <h2 class='title'>Login</h2>
+    
+    <input type="email" name="email" placeholder="Email" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+    <a href="/register">Create a new account</a>
+    <a href="/forgot_password">Forgot password</a>
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+</form>
+  
+</body>
+</html>

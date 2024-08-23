@@ -1,535 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Accident Analysis</title>
-    <link rel="stylesheet" href="static/style.css" />
-</head>
-
-<body>
-    <div id="hero home">
-        <header class="header">
-            <div class="row">
-                <div id="logo">
-                    <span class="t">A</span>LCHEMIST <span class="t">T</span>REASURE
-                </div>
-                <ul>
-                    <li><a href="#home" onclick="showSection('home')">Home</a></li>
-                    <li><a href="#previousAccidentReport" onclick="showSection('previousAccidentReport')">Old Report</a></li>
-                    <li><a title="For emergency services" href="#emergency_services">Services</a></li>
-                    <li><a href="#graphs" onclick="showSection('graphs')">Graphical Analysis</a></li>
-                </ul>
-            </div>
-        </header>
-        <!-- Home Section -->
-        <section class="home active" id="home">
-            <div class="container">
-                <h1 class="title">Accident Detection</h1>
-                <div class="items">
-                    <div class="video_stream item_box">
-                        <div class="ss"></div>
-                        <div class="cam start_cam">
-                            <span class="close" onclick="closeStream()">Close</span>
-                            <video id="videoFeed" autoplay></video>
-                        </div>
-                        <button class="start_cam" onclick="getCameraStream()">Start Camera</button>
-                    </div>
-                    <div class="file_upload item_box">
-                        <input type="file" class="i_box" id="videoInput" accept="video/*" />
-                        <button onclick="uploadVideo()">Upload Video</button>
-                    </div>
-                </div>
-                <div id="alerts">
-                    <h2>Alerts</h2>
-                    <div id="alertList"></div>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Graphs Section -->
-        <section class="graphs" id="graphs">
-            <div class="shell">
-                <h1 class="title">Graphical Analysis</h1>
-                <div class="graph-container grid-container">
-                    <iframe class="item1" src="static/graphs/accidents_over_time.html" ></iframe>
-                    <iframe class="item2" src="static/graphs/daily_accidents.html" ></iframe>
-                    <iframe class="item3" src="static/graphs/accidents_by_location.html" ></iframe>
-                    <iframe class="item4" src="static/graphs/accidents_by_category.html" ></iframe>
-                </div>
-            </div>
-        </section>
-
-        <!-- Previous Accident Reports Section -->
-        <section class="previousAccidentReport" id="previousAccidentReport">
-            <div class="container">
-                <h2>Previous Accident Reports</h2>
-                <div id="previousAccidentPhotos"></div>
-            </div>
-        </section>
-    </div>
-
-    <script>
-        async function getCameraStream() {
-            try {
-                document.querySelector('.cam').style.display = 'flex';
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                });
-                const video = document.getElementById("videoFeed");
-                video.srcObject = stream;
-            } catch (error) {
-                console.error("Error accessing the camera", error);
-                alert("Error accessing the camera.");
-            }
-        }
-
-        function closeStream() {
-            document.querySelector('.cam').style.display = 'none';
-            const video = document.getElementById("videoFeed");
-            const stream = video.srcObject;
-            if (stream) {
-                const tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-                video.srcObject = null;
-            }
-        }
-
-        async function uploadVideo() {
-            const fileInput = document.getElementById("videoInput");
-            if (fileInput.files.length === 0) {
-                alert("Please select a video file to upload.");
-                return;
-            }
-            const file = fileInput.files[0];
-            const formData = new FormData();
-            formData.append("video", file);
-
-            try {
-                const response = await fetch("/upload_video", {
-                    method: "POST",
-                    body: formData,
-                });
-
-                if (response.ok) {
-                    alert("Video uploaded successfully.");
-                } else {
-                    alert("Failed to upload video.");
-                }
-            } catch (error) {
-                console.error("Error uploading video", error);
-                alert("Error uploading video.");
-            }
-        }
-
-        async function fetchAlerts() {
-            try {
-                const response = await fetch("/alerts");
-                if (!response.ok) {
-                    throw new Error("Failed to fetch alerts");
-                }
-                const alerts = await response.json();
-                const alertList = document.getElementById("alertList");
-                alertList.innerHTML = alerts
-                    .map(
-                        (alert) => 
-                    `<div class="alert">
-                        <img src="${alert.photo}" alt="Accident photo">
-                        <p><strong>Time:</strong> ${alert.time}</p>
-                        <p><strong>Location:</strong> ${alert.location}</p>
-                    </div>`
-                    )
-                    .join("");
-            } catch (error) {
-                console.error("Error fetching or displaying alerts:", error);
-                alert("Error fetching or displaying alerts. Please check the console for details.");
-            }
-        }
-        fetchAlerts();
-        setInterval(fetchAlerts, 5000); // Fetch alerts every 5 seconds
-
-        function showSection(sectionId) {
-            document.querySelectorAll('section').forEach(section => {
-                section.classList.remove('active');
-            });
-            document.getElementById(sectionId).classList.add('active');
-        }
-    </script>
-</body>
-
-</html>
-
-
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  list-style: none;
-  text-decoration: none;
-  overflow-x: hidden;
-  transition: all 0.2s ease;
-}
-
-:root {
-  --trbg-color: #16162d93;
-  --bg-color: #1b2255;
-  --text-color: #ffffff;
-  --p-color: #c0b8fc95;
-}
-
-body {
-  font-family: Arial, sans-serif;
-  background-color: var(--bg-color);
-  position: relative;
-}
-
-h1 {
-  text-align: center;
-  color: var(--text-color);
-}
-
-p {
-  color: var(--p-color);
-}
-
-#videoFeed {
-  display: block;
-  border: 2px solid #ccc;
-  border-radius: 10px;
-  width: fit-content;
-  height: 450px;
-  position: absolute;
-}
-
-#alerts {
-  margin-top: 20px;
-  padding: 10px;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.alert {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  padding: 10px 0;
-  justify-content: center;
-}
-
-#alerts #alertList {
-  display: grid;
-  grid-template-columns: auto auto auto;
-  gap: 10px;
-}
-
-.alert:last-child {
-  border-bottom: none;
-}
-
-.alert p {
-  margin: 5px 0;
-  color: #555;
-}
-
-.alert img {
-  margin-top: 10px;
-  border-radius: 5px;
-  width: 300px;
-  min-height: 100px;
-  max-width: 100%;
-  height: 200px;
-  box-shadow: 0 4px 8px #0000001a;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.alert img:hover {
-  transform: scale(1.05);
-  box-shadow: 0 8px 16px #00000033;
-}
-
-.alert strong {
-  color: var(--bg-color);
-}
-
-.title {
-  font-size: 40px;
-  margin: 10px 0 20px 0;
-}
-
-header {
-  width: 100vw;
-  padding-top: 10px;
-  position: sticky;
-  top: 0;
-  background: var(--trbg-color);
-  z-index: 996;
-}
-
-.row {
-  width: 90%;
-  margin: auto;
-  max-width: 1500px;
-  height: 70px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.row > ul {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  width: fit-content;
-}
-
-.row > ul > li > a {
-  color: var(--text-color);
-  margin-left: 25px;
-}
-
-.row > ul > li > a:hover {
-  color: var(--p-color);
-}
-
-#logo {
-  font-size: 25px;
-  color: var(--p-color);
-  font-weight: 100;
-}
-
-#logo .t {
-  color: var(--text-color);
-  font-weight: 700;
-}
-
-.container {
-  max-width: 1500px;
-  width: 80%;
-  margin: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.items {
-  width: 100%;
-  height: 70vh;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-}
-
-.cam {
-  width: 100vw;
-  height: 100vh;
-  position: absolute;
-  top: 0;
-  left: 0;
-  margin: auto;
-  z-index: 999;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(5px);
-}
-
-.cam span.close {
-  position: absolute;
-  color: var(--text-color);
-  top: 20px;
-  right: 20px;
-  cursor: pointer;
-  padding: 5px 8px;
-  font-size: 16px;
-  font-weight: 400;
-  border-radius: 8px;
-}
-
-.cam span.close:hover {
-  color: var(--p-color);
-  border: solid 0.1px var(--p-color);
-}
-
-.item_box {
-  width: 40%;
-  height: 380px;
-  background: var(--bg-color);
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.item_box button {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--bg-color);
-  background-color: var(--text-color);
-  padding: 8px 15px;
-  cursor: pointer;
-  border-radius: 8px;
-  border: none;
-}
-
-.item_box button:hover {
-  color: var(--text-color);
-  background-color: var(--p-color);
-}
-
-.ss {
-  width: 70%;
-  height: 55%;
-  border: 1px solid var(--p-color);
-  margin-bottom: 2.5%;
-  border-radius: 8px;
-}
-
-.i_box {
-  width: 70%;
-  height: 55%;
-  border: 1px solid var(--p-color);
-  margin-bottom: 2.5%;
-  border-radius: 8px;
-  position: relative;
-  display: flex;
-  text-align: center;
-  color: var(--p-color);
-  cursor: pointer;
-  padding: 10px;
-}
-
-input.i_box::file-selector-button {
-  font-weight: bold;
-  color: var(--p-color);
-  padding: 0.5em;
-  border: thin solid grey;
-  border-radius: 3px;
-  display: flex;
-  background: none;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 16px;
-  border: none;
-}
-
-.graphs {
-  display: none;
-}
-
-.active {
-  display: block;
-}
-
-#chart-section {
-  display: none;
-}
-
-.sidebar {
-  height: 100%;
-  width: 200px;
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color: #111;
-  padding-top: 20px;
-}
-
-.sidebar a {
-  padding: 10px 15px;
-  text-decoration: none;
-  font-size: 18px;
-  color: white;
-  display: block;
-}
-
-.sidebar a:hover {
-  background-color: #575757;
-}
-
-.main-content {
-  margin-left: 210px;
-  padding: 20px;
-}
-
-.chart-container {
-  width: 100%;
-  height: 400px;
-  margin-bottom: 40px;
-}
-
-/* Graphs */
-section.graphs {
-  width: 100%;
-  height: 100vh;
-}
-
-.shell,
-.graph-container {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.graph-container iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-}
-
-.item1 {
-  grid-area: main;
-  height: 100%;
-}
-
-.item2 {
-  grid-area: menu;
-  height: 100%;
-}
-
-.item3 {
-  grid-area: menu1;
-  height: 100%;
-}
-
-.item4 {
-  grid-area: menu2;
-  height: 100%;
-}
-
-.grid-container {
-  display: grid;
-  grid-template-areas:
-    'main main main main main menu'
-    'main main main main main menu1'
-    'main main main main main menu2'
-    'main main main main main menu2';
-  gap: 5px;
-}
-
-
-
-from flask import Flask, render_template, jsonify, request, send_from_directory
-import cv2
-import threading
-import time
+from flask import Flask, render_template, jsonify, request, send_from_directory, Response, stream_with_context
+import os
 import smtplib
+import uuid
+import json
+import cv2
+import time
+import numpy as np
+import threading
+import matplotlib.pyplot as plt
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email import encoders
-import os
-import json
+from tensorflow.keras.models import load_model
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -537,80 +21,56 @@ load_dotenv()
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploaded_videos'
 app.config['ALERTS_FILE'] = 'alerts.json'
+app.config['PREVIOUS_ACCIDENTS_FILE'] = 'previous_accidents.json'
 app.config['PREVIOUS_ACCIDENTS_FOLDER'] = 'static/accidents'
 app.config['GRAPH_FOLDER'] = 'static/graphs'
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+os.makedirs(app.config['PREVIOUS_ACCIDENTS_FOLDER'], exist_ok=True)
+os.makedirs(app.config['GRAPH_FOLDER'], exist_ok=True)
 
-if not os.path.exists(app.config['PREVIOUS_ACCIDENTS_FOLDER']):
-    os.makedirs(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
-
-if not os.path.exists(app.config['GRAPH_FOLDER']):
-    os.makedirs(app.config['GRAPH_FOLDER'])
-
-# Initialize the alerts file if it doesn't exist
+# Initialize JSON files
 if not os.path.exists(app.config['ALERTS_FILE']):
     with open(app.config['ALERTS_FILE'], 'w') as f:
         json.dump([], f)
 
-def check_for_accident(frame, background_subtractor, min_area=500):
-    fg_mask = background_subtractor.apply(frame)
-    fg_mask = cv2.threshold(fg_mask, 200, 255, cv2.THRESH_BINARY)[1]
-    fg_mask = cv2.dilate(fg_mask, None, iterations=2)
-    contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    
-    for contour in contours:
-        if cv2.contourArea(contour) < min_area:
-            continue
-        return True
-    return False
+if not os.path.exists(app.config['PREVIOUS_ACCIDENTS_FILE']):
+    with open(app.config['PREVIOUS_ACCIDENTS_FILE'], 'w') as f:
+        json.dump([], f)
 
-def detect_accidents(video_source=0):
-    cap = cv2.VideoCapture(video_source)
-    background_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        if check_for_accident(frame, background_subtractor):
-            timestamp = time.strftime('%Y-%m-%d_%H-%M-%S')
-            photo_path = f'static/accidents/accident_{timestamp}.jpg'
-            cv2.imwrite(photo_path, frame)
-            location = '1234 Example St, City, Country'
-            alert = {
-                'time': timestamp,
-                'location': location,
-                'photo': photo_path
-            }
-            save_alert(alert)
-            save_previous_accident_photo(photo_path)
-            send_email_alert(alert)
-            update_alert_list()
-        time.sleep(1)
-    cap.release()
+# Load the trained model
+model = load_model('accident_detection_model.h5')
 
-def save_alert(alert):
-    with open(app.config['ALERTS_FILE'], 'r') as f:
-        alerts = json.load(f)
-    alerts.append(alert)
-    with open(app.config['ALERTS_FILE'], 'w') as f:
-        json.dump(alerts, f, indent=4)
+def create_output_directory(video_path):
+    video_filename = os.path.splitext(os.path.basename(video_path))[0]
+    output_directory = os.path.join('static/accidents', video_filename)
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+    return output_directory
 
-def save_previous_accident_photo(photo_path):
-    destination_path = os.path.join(app.config['PREVIOUS_ACCIDENTS_FOLDER'], os.path.basename(photo_path))
-    os.rename(photo_path, destination_path)
+def preprocess_frame(frame):
+    img = cv2.resize(frame, (224, 224))
+    img = np.expand_dims(img, axis=0) / 255.0
+    return img
+
+def predict_frame(frame):
+    img = preprocess_frame(frame)
+    predictions = model.predict(img)
+    predicted_class = np.argmax(predictions)
+    confidence = predictions[0][predicted_class]
+    return predicted_class, confidence
 
 def send_email_alert(alert):
-    sender_email = os.getenv('SENDER_EMAIL')
-    receiver_email = os.getenv('RECEIVER_EMAIL')
-    password = os.getenv('EMAIL_PASSWORD')
-    smtp_server = os.getenv('SMTP_SERVER')
-    smtp_port = os.getenv('SMTP_PORT')
+    smtp_server = 'smtp.gmail.com'
+    smtp_port = 587
+    sender_email = os.getenv('abhishekdubalgonde7846@gmail.com')
+    receiver_email = os.getenv('ganesh123zade@gmail.com')
+    password = os.getenv('fihm tmhi zhlp gbma')
 
     subject = "Accident Detected"
-    body = f"An accident was detected at {alert['time']}.\nLocation: {alert['location']}"
+    body = f"An accident was detected at {datetime.fromtimestamp(alert['time']).strftime('%Y-%m-%d %H:%M:%S')}.\nLocation: {alert['location']}\n\n"
+    google_maps_link = f"https://www.google.com/maps/search/?api=1&query={alert['location'].replace(' ', '+')}"
+    body += f"Google Maps Directions: {google_maps_link}"
 
     msg = MIMEMultipart()
     msg['From'] = sender_email
@@ -618,31 +78,94 @@ def send_email_alert(alert):
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
-    attachment = open(alert['photo'], 'rb')
-    part = MIMEBase('application', 'octet-stream')
-    part.set_payload(attachment.read())
-    encoders.encode_base64(part)
-    part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(alert['photo'])}")
+    with open(alert['photo'], 'rb') as attachment:
+        part = MIMEBase('application', 'octet-stream')
+        part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition', f"attachment; filename={os.path.basename(alert['photo'])}")
+        msg.attach(part)
 
-    msg.attach(part)
-    text = msg.as_string()
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(sender_email, password)
+            server.sendmail(sender_email, receiver_email, msg.as_string())
+        print("Email sent successfully")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
 
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(sender_email, password)
-        server.sendmail(sender_email, receiver_email, text)
+def save_alert(alert):
+    try:
+        with open(app.config['ALERTS_FILE'], 'r+') as f:
+            data = json.load(f)
+            data.append(alert)
+            f.seek(0)
+            json.dump(data, f)
+        update_timestamp()
+    except Exception as e:
+        print(f"Failed to save alert: {e}")
 
-def update_alert_list():
-    with open(app.config['ALERTS_FILE'], 'r') as f:
-        alerts = json.load(f)
-    alert_list = [{'time': alert['time'], 'location': alert['location']} for alert in alerts]
-    socketio.emit('update_alert_list', {'alerts': alert_list})
+def update_timestamp():
+    timestamp = time.time()
+    with open('timestamp.json', 'w') as f:
+        json.dump({'timestamp': timestamp}, f)
+
+def move_old_alerts():
+    five_minutes_ago = time.time() - 300
+    try:
+        with open(app.config['ALERTS_FILE'], 'r+') as f:
+            alerts = json.load(f)
+            recent_alerts = [alert for alert in alerts if alert['time'] >= five_minutes_ago]
+            old_alerts = [alert for alert in alerts if alert['time'] < five_minutes_ago]
+            recent_alerts.sort(key=lambda x: x['time'], reverse=True)  # Sort recent alerts in descending order
+            f.seek(0)
+            f.truncate()
+            json.dump(recent_alerts, f)
+
+        with open(app.config['PREVIOUS_ACCIDENTS_FILE'], 'r+') as f:
+            previous_accidents = json.load(f)
+            previous_accidents.extend(old_alerts)
+            previous_accidents.sort(key=lambda x: x['time'], reverse=True)  # Sort previous accidents in descending order
+            f.seek(0)
+            f.truncate()
+            json.dump(previous_accidents, f)
+    except Exception as e:
+        print(f"Failed to move old alerts: {e}")
+
+def detect_accidents(video_path):
+    cap = cv2.VideoCapture(video_path)
+    frame_count = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        prediction, confidence = predict_frame(frame)
+        if prediction == 1 and confidence >= 0.9:  # Assuming 1 corresponds to accident class
+            frame_count += 1
+            filename = f'accident_frame_{str(uuid.uuid4())[:8]}.jpg'
+            output_directory = create_output_directory(video_path)
+            save_path = os.path.join(output_directory, filename)
+            cv2.imwrite(save_path, frame)
+            print(f"Saved high confidence accident frame to {filename}")
+            timestamp = datetime.now(timezone.utc).timestamp()
+            alert = {
+                'time': timestamp,
+                'location': '1234 Example St, City, Country',  # Replace with actual location
+                'photo': save_path
+            }
+            save_alert(alert)
+            send_email_alert(alert)
+        time.sleep(1)
+    cap.release()
+    cv2.destroyAllWindows()
 
 @app.route('/')
 def index():
     with open(app.config['ALERTS_FILE'], 'r') as f:
         alerts = json.load(f)
-    previous_accidents = os.listdir(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
+    with open(app.config['PREVIOUS_ACCIDENTS_FILE'], 'r') as f:
+        previous_accidents = json.load(f)
     return render_template('index.html', alerts=alerts, previous_accidents=previous_accidents)
 
 @app.route('/alerts')
@@ -653,7 +176,8 @@ def get_alerts():
 
 @app.route('/previous_accidents')
 def get_previous_accidents():
-    previous_accidents = os.listdir(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
+    with open(app.config['PREVIOUS_ACCIDENTS_FILE'], 'r') as f:
+        previous_accidents = json.load(f)
     return jsonify(previous_accidents)
 
 @app.route('/upload_video', methods=['POST'])
@@ -672,10 +196,387 @@ def upload_video():
     
     return 'Video uploaded successfully', 200
 
-@app.route('/static/<path:filename>')
-def static_files(filename):
-    return send_from_directory(app.config['GRAPH_FOLDER'], filename)
+@app.route('/stream_analysis')
+def stream_analysis():
+    def generate():
+        video_path = os.path.join(app.config['UPLOAD_FOLDER'], request.args.get('video_filename'))
+        cap = cv2.VideoCapture(video_path)
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            prediction, confidence = predict_frame(frame)
+            frame_data = {
+                "status": "processing",
+                "frame": {
+                    "width": frame.shape[1],
+                    "height": frame.shape[0],
+                    "data": frame.flatten().tolist()  # Convert frame to list of values
+                }
+            }
+            yield f"data: {json.dumps(frame_data)}\n\n"
+
+            if prediction == 1 and confidence >= 0.9:
+                frame_data["status"] = "accident"
+                yield f"data: {json.dumps(frame_data)}\n\n"
+
+        cap.release()
+        yield f"data: {json.dumps({'status': 'done'})}\n\n"
+
+    return Response(stream_with_context(generate()), mimetype='text/event-stream')
+
+@app.route('/graph')
+def graph_page():
+    return render_template('graphical_analysis.html')
+
+@app.route('/cctv_dashboard')
+def cctv_dashboard():
+    return render_template('cctv_dashboard.html')
+
+@app.route('/generate_graph')
+def generate_graph():
+    with open(app.config['ALERTS_FILE'], 'r') as f:
+        alerts = json.load(f)
+    
+    dates = [datetime.fromtimestamp(alert['time']).strftime('%Y-%m-%d') for alert in alerts]
+    unique_dates = list(set(dates))
+    counts = [dates.count(date) for date in unique_dates]
+    
+    plt.figure(figsize=(10, 5))
+    plt.bar(unique_dates, counts, color='blue')
+    plt.xlabel('Date')
+    plt.ylabel('Number of Accidents')
+    plt.title('Accidents per Day')
+    plt.xticks(rotation=45)
+    
+    graph_path = os.path.join(app.config['GRAPH_FOLDER'], 'accidents_per_day.png')
+    plt.savefig(graph_path)
+    plt.close()
+
+    return send_from_directory(app.config['GRAPH_FOLDER'], 'accidents_per_day.png')
+
+@app.route('/timestamp')
+def get_timestamp():
+    try:
+        with open('timestamp.json', 'r') as f:
+            timestamp = json.load(f)
+        return jsonify(timestamp)
+    except Exception as e:
+        print(f"Failed to read timestamp: {e}")
+        return jsonify({'timestamp': 0})
 
 if __name__ == '__main__':
-    threading.Thread(target=detect_accidents).start()
-    app.run(debug=True)
+    threading.Thread(target=move_old_alerts).start()
+    app.run(debug=True , port=5001)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accident Detection System</title>
+    <link rel="stylesheet" href="../static/style.css">
+    <style>
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(249, 249, 249, 0.3);
+            backdrop-filter: blur(10px);
+            justify-content: center;
+            align-items: center;
+   
+        }
+        .popup-content {
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 1200px;
+            display: grid;
+            align-items: center;
+            justify-content: center;
+            grid-template-columns: auto auto;
+            background-color: rgba(249, 249, 249, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 9px;
+
+        }
+        .close {
+            color: #000;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .popup video {
+            width: 50%;
+            height: auto;
+        }
+        .popup canvas {
+            width: 100%;
+            height: auto;
+        }
+        .spinner {
+            display: none;
+            margin: auto;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .analysisStatus{
+          width: 50%;
+          display:flex;
+          flex-direction: column;
+          align-item: center;
+          justify-content: center;
+        }
+    </style>
+</head>
+<body>
+  {% include "header.html" %}
+    <!-- Existing content -->
+     <div id="bgbg"></div>
+    <div id="main" style="padding-top: 120px;">
+        <button class="cctv_brn" onclick="location.href='/cctv_dashboard'">Surveillance Cam</button>
+        <section class="home active" id="home">
+            <div class="container">
+                <h1 class="title">Accident Detection</h1>
+                <div class="items">
+                    <div class="video_stream item_box">
+                        <div class="ss"></div>
+                        <button class="start_cam" onclick="getCameraStream()">Start Camera</button>
+                      </div>
+                      <div class="cam start_cam">
+                          <span class="close" onclick="closeStream()">Close</span>
+                          <video id="videoFeed" autoplay></video>
+                      </div>
+                    <div class="file_upload item_box">
+                        <input type="file" class="i_box" id="videoInput" accept="video/*">
+                        <button onclick="uploadVideo()">Upload Video</button>
+                    </div>
+                </div>
+                <div id="alerts">
+                    <h2 class="title2">Alerts</h2>
+                    <div id="alertList" class="alert"></div>
+                </div>
+                <div id="previousAccidents" class="history">
+                    <h2 class="title2">Previous Accidents</h2>
+                    <div id="previousAccidentsList" class="alert" ></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Popup for uploaded video -->
+    <div id="videoPopup" class="popup">
+        <div class="popup-content">
+            <span class="close" onclick="closePopup()">&times;</span>
+            <div id="analysisStatus">
+                <div class="spinner" id="loadingSpinner"></div>
+                <p id="statusText">Analyzing video, please wait...</p>
+            </div>
+            <video id="uploadedVideo" autoplay style="width: 100%;" controls></video>
+            <canvas style="width: 100%;" id="rgbFrame"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let currentTimestamp = 0;
+
+        async function getCameraStream() {
+            try {
+                document.querySelector('.cam').style.display = 'flex';
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById("videoFeed");
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Error accessing the camera", error);
+            }
+        }
+
+        function closeStream() {
+            document.querySelector('.cam').style.display = 'none';
+            const video = document.getElementById("videoFeed");
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+            video.srcObject = null;
+        }
+
+        async function uploadVideo() {
+            const fileInput = document.getElementById("videoInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select a video file to upload.");
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("video", file);
+
+            try {
+                const response = await fetch("/upload_video", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const videoUrl = URL.createObjectURL(file);
+                    document.getElementById("uploadedVideo").src = videoUrl;
+                    document.getElementById("videoPopup").style.display = "flex";
+                    document.getElementById("loadingSpinner").style.display = "block";
+                    document.getElementById("statusText").textContent = "Analyzing video, please wait...";
+
+                    const eventSource = new EventSource("/stream_analysis");
+                    eventSource.onmessage = function(event) {
+                        const data = JSON.parse(event.data);
+                        if (data.status === "done") {
+                            document.getElementById("loadingSpinner").style.display = "none";
+                            document.getElementById("statusText").textContent = "Analysis complete.";
+                            eventSource.close();
+                        } else {
+                            displayFrame(data.frame);
+                        }
+                    };
+
+                    alert("Video uploaded successfully.");
+                    fetchAlerts();
+                } else {
+                    alert("Failed to upload video.");
+                }
+            } catch (error) {
+                console.error("Error uploading the video", error);
+                alert("An error occurred while uploading the video.");
+            }
+        }
+
+        function closePopup() {
+            document.getElementById("videoPopup").style.display = "none";
+        }
+
+        function displayFrame(frameData) {
+            const canvas = document.getElementById("rgbFrame");
+            const ctx = canvas.getContext("2d");
+            const imageData = new ImageData(new Uint8ClampedArray(frameData.data), frameData.width, frameData.height);
+            canvas.width = frameData.width;
+            canvas.height = frameData.height;
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        async function fetchTimestamp() {
+            try {
+                const response = await fetch("/timestamp");
+                if (response.ok) {
+                    const data = await response.json();
+                    const newTimestamp = data.timestamp;
+                    if (newTimestamp > currentTimestamp) {
+                        currentTimestamp = newTimestamp;
+                        fetchAlerts();
+                    }
+                } else {
+                    console.error("Failed to fetch timestamp");
+                }
+            } catch (error) {
+                console.error("Error fetching timestamp", error);
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch("/alerts");
+                if (response.ok) {
+                    const alerts = await response.json();
+                    const alertList = document.getElementById("alertList");
+                    alertList.innerHTML = "";
+                    alerts.forEach(alert => {
+                        const alertDiv = document.createElement("div");
+                        alertDiv.innerHTML = `
+                            <div class="alert_box">
+                                <img src="${alert.photo}" alt="Accident Photo" width="200">
+                                <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
+                                <p><strong>Location:</strong> ${alert.location}</p>
+                            </div>
+                        `;
+                        alertList.prepend(alertDiv); // Add the most recent alerts at the top
+                    });
+                } else {
+                    console.error("Failed to fetch alerts");
+                }
+            } catch (error) {
+                console.error("Error fetching alerts", error);
+            }
+        }
+
+        async function fetchPreviousAccidents() {
+            try {
+                const response = await fetch("/previous_accidents");
+                if (response.ok) {
+                    const alerts = await response.json();
+                    const previousAccidentsList = document.getElementById("previousAccidentsList");
+                    previousAccidentsList.innerHTML = "";
+                    alerts.forEach(alert => {
+                        const alertDiv = document.createElement("div");
+                        alertDiv.innerHTML = `
+                            <div class="alert_box">
+                                <img src="${alert.photo}" alt="Accident Photo" width="200">
+                                <p><strong>Time:</strong> ${new Date(alert.time * 1000).toLocaleString()}</p>
+                                <p><strong>Location:</strong> ${alert.location}</p>
+                            </div>
+                        `;
+                        previousAccidentsList.prepend(alertDiv); // Add the most recent alerts at the top
+                    });
+                } else {
+                    console.error("Failed to fetch alerts");
+                }
+            } catch (error) {
+                console.error("Error fetching alerts", error);
+            }
+        }
+
+        setInterval(fetchTimestamp, 5000); // Fetch new alerts every 5 seconds
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchPreviousAccidents();
+        });
+        function history(){
+          var hist = document.querySelector('#previousAccidents');
+          hist.classList.toggle('history')
+        }
+
+    </script>
+    {% include "footer.html" %}
+</body>
+</html>

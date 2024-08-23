@@ -1,0 +1,19 @@
+{% include "header.html" %}
+<div id="bgbg"></div>
+
+{% if current_user.is_authenticated %}
+<section class="profile">
+  <div id="userProfile">
+    <h2 class='title'>User Profile</h2>
+    <img class="user_pro" src="../static/imgs/user.png" alt="">
+    <p><strong>Username: </strong> {{ current_user.username }}</p>
+    <p><strong>Email: </strong> {{ current_user.email }}</p>
+    <li class="logout"><a href="/logout">Logout</a></li>
+</div>
+</section>
+{% endif %}
+
+{% include "footer.html" %}
+
+</body>
+</html>
